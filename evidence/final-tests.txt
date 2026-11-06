@@ -1,0 +1,50 @@
+Command: npm test
+
+> vite-react-typescript-starter@0.0.0 test
+> node --import ./tests/register.mjs --test tests/improved.test.mjs tests/practice9.test.mjs tests/assignment4.test.mjs
+
+(node:37473) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ F1 exact capacity is included (0.85975ms)
+✔ F1 capacity one seat short is excluded (0.121708ms)
+✔ F2 all required items must be present (0.154375ms)
+✔ F3 blocked match remains visible and cannot be available (0.229334ms)
+✔ F4 no eligible rooms yields an empty list (0.627792ms)
+✔ invalid attendees are not silently rounded or defaulted (0.123291ms)
+✔ chosen room supplies the booking data (0.132792ms)
+✔ catalog booking lists survive repeated checks and filtering (0.336416ms)
+✔ catalog has unique ids, complete equipment and distinct booking arrays (0.276542ms)
+✔ 120 is accepted and 121 rejected in a free evening slot (0.23725ms)
+(node:37474) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ T01 - Starts exactly when existing booking ends (1.990042ms)
+✔ T02 - Start equals current time (0.172708ms)
+✔ T03 - Start and end are equal (0.109333ms)
+✔ T04 - End is earlier than start (0.090042ms)
+✔ T05 - End exceeds end of day (0.097042ms)
+✔ T06 - Duration equals 120 minutes (0.1065ms)
+✔ T07 - Duration exceeds 120 minutes (0.096458ms)
+✔ T08 - Ends exactly when existing booking starts (0.082833ms)
+✔ T09 - Partially overlaps existing booking (0.097791ms)
+✔ T10 - Contains the complete existing booking (0.175625ms)
+✔ T11 - Lies inside existing booking (0.097834ms)
+✔ T12 - Identical interval conflicts (0.086833ms)
+✔ T13 - Blocked room rejects valid interval (0.075542ms)
+✔ T14 - Empty bookings allow valid interval (0.095125ms)
+✔ T15 - Data preservation on available and unavailable paths (0.990667ms)
+✔ T16 - End exactly at 1440 is valid (0.133542ms)
+✔ T17 - Fractional start minute must be rejected (0.084416ms)
+✔ T18 - Parser accepts 24:00 but rejects 24:01 (0.191458ms)
+✔ T19 - Frozen multiple-booking data is preserved (0.217333ms)
+(node:37475) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ P9 fresh room instances do not share booking records (1.346583ms)
+✔ P9 fixture factory preserves contract and repeated calls do not mutate (0.427292ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 141.026833

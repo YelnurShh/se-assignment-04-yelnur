@@ -9,8 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "test": "node --import ./tests/register.mjs --test tests/improved.test.mjs tests/practice9.test.mjs",
-    "test:first": "node --import ./tests/register.mjs --test tests/first.test.mjs"
+    "test": "node --import ./tests/register.mjs --test tests/improved.test.mjs tests/practice9.test.mjs tests/assignment4.test.mjs",
+    "test:first": "node --import ./tests/register.mjs --test tests/first.test.mjs",
+    "test:ui": "node tests/ui.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

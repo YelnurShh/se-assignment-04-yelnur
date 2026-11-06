@@ -1,0 +1,10 @@
+Command: UI_EVIDENCE_DIR=../evidence/screenshots npm run test:ui
+
+> vite-react-typescript-starter@0.0.0 test:ui
+> node tests/ui.mjs
+
+PASS F5: selecting another room cleared feedback and changed the result for the same interval.
+PASS F1/F2: exact capacity and both required items; only the matching room is shown.
+PASS F4: no matches, no old result, and no enabled check.
+PASS F3: blocked room rejected in an otherwise free interval.
+PASS AC6: 390 px layout with feedback, no horizontal overflow or uncaught errors.

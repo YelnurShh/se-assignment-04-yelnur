@@ -1,0 +1,141 @@
+node --import ./tests/register.mjs --test --test-reporter=tap tests/improved.test.mjs tests/practice9.test.mjs
+TAP version 13
+# (node:36766) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: T01 - Starts exactly when existing booking ends
+ok 1 - T01 - Starts exactly when existing booking ends
+  ---
+  duration_ms: 1.659292
+  type: 'test'
+  ...
+# Subtest: T02 - Start equals current time
+ok 2 - T02 - Start equals current time
+  ---
+  duration_ms: 0.104542
+  type: 'test'
+  ...
+# Subtest: T03 - Start and end are equal
+ok 3 - T03 - Start and end are equal
+  ---
+  duration_ms: 0.08675
+  type: 'test'
+  ...
+# Subtest: T04 - End is earlier than start
+ok 4 - T04 - End is earlier than start
+  ---
+  duration_ms: 0.077291
+  type: 'test'
+  ...
+# Subtest: T05 - End exceeds end of day
+ok 5 - T05 - End exceeds end of day
+  ---
+  duration_ms: 0.084625
+  type: 'test'
+  ...
+# Subtest: T06 - Duration equals 120 minutes
+ok 6 - T06 - Duration equals 120 minutes
+  ---
+  duration_ms: 0.100625
+  type: 'test'
+  ...
+# Subtest: T07 - Duration exceeds 120 minutes
+ok 7 - T07 - Duration exceeds 120 minutes
+  ---
+  duration_ms: 0.164791
+  type: 'test'
+  ...
+# Subtest: T08 - Ends exactly when existing booking starts
+ok 8 - T08 - Ends exactly when existing booking starts
+  ---
+  duration_ms: 0.107917
+  type: 'test'
+  ...
+# Subtest: T09 - Partially overlaps existing booking
+ok 9 - T09 - Partially overlaps existing booking
+  ---
+  duration_ms: 0.108792
+  type: 'test'
+  ...
+# Subtest: T10 - Contains the complete existing booking
+ok 10 - T10 - Contains the complete existing booking
+  ---
+  duration_ms: 0.167916
+  type: 'test'
+  ...
+# Subtest: T11 - Lies inside existing booking
+ok 11 - T11 - Lies inside existing booking
+  ---
+  duration_ms: 0.093916
+  type: 'test'
+  ...
+# Subtest: T12 - Identical interval conflicts
+ok 12 - T12 - Identical interval conflicts
+  ---
+  duration_ms: 0.079833
+  type: 'test'
+  ...
+# Subtest: T13 - Blocked room rejects valid interval
+ok 13 - T13 - Blocked room rejects valid interval
+  ---
+  duration_ms: 0.069917
+  type: 'test'
+  ...
+# Subtest: T14 - Empty bookings allow valid interval
+ok 14 - T14 - Empty bookings allow valid interval
+  ---
+  duration_ms: 0.066125
+  type: 'test'
+  ...
+# Subtest: T15 - Data preservation on available and unavailable paths
+ok 15 - T15 - Data preservation on available and unavailable paths
+  ---
+  duration_ms: 1.42075
+  type: 'test'
+  ...
+# Subtest: T16 - End exactly at 1440 is valid
+ok 16 - T16 - End exactly at 1440 is valid
+  ---
+  duration_ms: 0.18675
+  type: 'test'
+  ...
+# Subtest: T17 - Fractional start minute must be rejected
+ok 17 - T17 - Fractional start minute must be rejected
+  ---
+  duration_ms: 0.0665
+  type: 'test'
+  ...
+# Subtest: T18 - Parser accepts 24:00 but rejects 24:01
+ok 18 - T18 - Parser accepts 24:00 but rejects 24:01
+  ---
+  duration_ms: 0.249334
+  type: 'test'
+  ...
+# Subtest: T19 - Frozen multiple-booking data is preserved
+ok 19 - T19 - Frozen multiple-booking data is preserved
+  ---
+  duration_ms: 0.525583
+  type: 'test'
+  ...
+# (node:36767) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: P9 fresh room instances do not share booking records
+ok 20 - P9 fresh room instances do not share booking records
+  ---
+  duration_ms: 1.696333
+  type: 'test'
+  ...
+# Subtest: P9 fixture factory preserves contract and repeated calls do not mutate
+ok 21 - P9 fixture factory preserves contract and repeated calls do not mutate
+  ---
+  duration_ms: 0.664958
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 184.1615

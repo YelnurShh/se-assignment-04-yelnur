@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Clock,
   DoorClosed,
@@ -8,22 +8,41 @@ import {
   LockOpen,
   CalendarDays,
 } from "lucide-react";
-import type { Room, AvailabilityResult } from "@/lib/types";
+import type { AvailabilityResult } from "@/lib/types";
 import { checkAvailability } from "@/lib/checkAvailability";
 import { labelToMinutes, minutesToLabel } from "@/lib/time";
-import { createInitialRoom, CURRENT_TIME } from "@/config/room";
+import { CURRENT_TIME } from "@/config/room";
+import { CATALOG } from "@/config/catalog";
+import { filterRooms } from "@/lib/roomFilters";
+import { CatalogPicker } from "@/components/CatalogPicker";
 import { Timeline } from "@/components/Timeline";
 
+function TimeInput({ id, label, value, example, onChange }: {
+  id: string; label: string; value: string; example: string; onChange: (value: string) => void;
+}) {
+  return <div>
+    <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-slate-600">{label}</label>
+    <input id={id} type="text" value={value} onChange={e => onChange(e.target.value)}
+      placeholder={`e.g. ${example}`}
+      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
+  </div>;
+}
+
 export function RoomAvailabilityChecker() {
-  const [room, setRoom] = useState<Room>(createInitialRoom);
+  const [roomId, setRoomId] = useState(CATALOG[0].id);
+  const [attendees, setAttendees] = useState("1");
+  const [equipment, setEquipment] = useState<string[]>([]);
+  const matches = filterRooms(CATALOG, Number(attendees), equipment);
+  const room = matches.find(item => item.id === roomId) ?? matches[0];
   const [startLabel, setStartLabel] = useState("10:00");
   const [endLabel, setEndLabel] = useState("11:00");
   const [result, setResult] = useState<AvailabilityResult | null>(null);
 
-  const startMin = useMemo(() => labelToMinutes(startLabel), [startLabel]);
-  const endMin = useMemo(() => labelToMinutes(endLabel), [endLabel]);
+  const startMin = labelToMinutes(startLabel);
+  const endMin = labelToMinutes(endLabel);
 
   function handleCheck() {
+    if (!room) return;
     if (startMin === null || endMin === null) {
       setResult({
         available: false,
@@ -35,11 +54,6 @@ export function RoomAvailabilityChecker() {
       return;
     }
     setResult(checkAvailability(room, startMin, endMin, CURRENT_TIME));
-  }
-
-  function toggleBlocked() {
-    setRoom((r) => ({ ...r, blocked: !r.blocked }));
-    setResult(null);
   }
 
   function formatDuration(min: number | null): string {
@@ -72,7 +86,14 @@ export function RoomAvailabilityChecker() {
       </header>
 
       <main className="mx-auto max-w-5xl px-5 py-8">
-        <div className="grid gap-6 md:grid-cols-5">
+        <CatalogPicker rooms={matches} roomId={room?.id ?? ""} attendees={attendees} equipment={equipment}
+          onRoom={id => { setRoomId(id); setResult(null); }}
+          onAttendees={value => { setAttendees(value); setResult(null); }}
+          onEquipment={item => {
+            setEquipment(items => items.includes(item) ? items.filter(value => value !== item) : [...items, item]);
+            setResult(null);
+          }} />
+        {room && <div className="grid gap-6 md:grid-cols-5">
           {/* Left: room info + form */}
           <div className="md:col-span-3 space-y-6">
             {/* Room card */}
@@ -87,10 +108,10 @@ export function RoomAvailabilityChecker() {
                     <p className="text-sm text-slate-500">
                       {room.building} · Capacity {room.capacity}
                     </p>
+                    <p className="text-sm text-slate-600">{room.equipment.join(", ")}</p>
                   </div>
                 </div>
-                <button
-                  onClick={toggleBlocked}
+                <span
                   className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     room.blocked
                       ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
@@ -106,7 +127,7 @@ export function RoomAvailabilityChecker() {
                       <LockOpen className="h-3.5 w-3.5" /> Open
                     </>
                   )}
-                </button>
+                </span>
               </div>
 
               <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
@@ -125,38 +146,10 @@ export function RoomAvailabilityChecker() {
               </h3>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="start-time"
-                    className="mb-1.5 block text-xs font-medium text-slate-600"
-                  >
-                    Start time (HH:MM)
-                  </label>
-                  <input
-                    id="start-time"
-                    type="text"
-                    value={startLabel}
-                    onChange={(e) => setStartLabel(e.target.value)}
-                    placeholder="e.g. 10:00"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="end-time"
-                    className="mb-1.5 block text-xs font-medium text-slate-600"
-                  >
-                    End time (HH:MM)
-                  </label>
-                  <input
-                    id="end-time"
-                    type="text"
-                    value={endLabel}
-                    onChange={(e) => setEndLabel(e.target.value)}
-                    placeholder="e.g. 11:00"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                  />
-                </div>
+                <TimeInput id="start-time" label="Start time (HH:MM)" value={startLabel} example="10:00"
+                  onChange={value => { setStartLabel(value); setResult(null); }} />
+                <TimeInput id="end-time" label="End time (HH:MM)" value={endLabel} example="11:00"
+                  onChange={value => { setEndLabel(value); setResult(null); }} />
               </div>
 
               <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
@@ -179,7 +172,7 @@ export function RoomAvailabilityChecker() {
 
             {/* Result */}
             {result && (
-              <section
+              <section role="status" data-testid="availability-result"
                 className={`rounded-2xl border p-5 shadow-sm transition ${
                   result.available
                     ? "border-emerald-200 bg-emerald-50"
@@ -257,7 +250,7 @@ export function RoomAvailabilityChecker() {
               )}
             </section>
           </div>
-        </div>
+        </div>}
       </main>
     </div>
   );

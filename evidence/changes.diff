@@ -1,0 +1,380 @@
+--- baseline/AGENTS.md
++++ project/AGENTS.md
+@@ -1,22 +0,0 @@
+-# Project
+-Smart Campus room availability checker with one visible room, fictional bookings and a fixed clock.
+-
+-## Constraints
+-Preserve AC1 to AC6: reject invalid or past intervals, durations above 120 minutes, blocked rooms and overlaps. Allow touching endpoints. Never mutate bookings. Preserve desktop and mobile feedback.
+-Do not add login, backend, database, saved bookings or unrelated features.
+-
+-## Structure
+-src/components contains the UI. src/lib contains booking logic and time helpers. tests contains executable Node regression tests.
+-
+-## Engineering rules
+-Use pure functions and the smallest justified module boundary. Use at most two justified patterns. Do not add Strategy without multiple real policies, Adapter without multiple real formats, or unnecessary classes.
+-Keep public function signatures and existing messages stable. Never weaken existing assertions.
+-
+-## Verification
+-Use Node 24 or later.
+-node --import ./tests/register.mjs --test --test-reporter=tap tests/improved.test.mjs tests/practice9.test.mjs
+-npm run typecheck
+-npm run build
+-Check the existing UI on desktop and at 390 pixels wide.
+-Report changed files, rationale, actual test counts and any unverified checks.
+-Explicitly read this file before editing; do not claim automatic loading.
+--- baseline/package.json
++++ project/package.json
+@@ -9,8 +9,9 @@
+     "lint": "eslint .",
+     "preview": "vite preview",
+     "typecheck": "tsc --noEmit -p tsconfig.app.json",
+-    "test": "node --import ./tests/register.mjs --test tests/improved.test.mjs tests/practice9.test.mjs",
+-    "test:first": "node --import ./tests/register.mjs --test tests/first.test.mjs"
++    "test": "node --import ./tests/register.mjs --test tests/improved.test.mjs tests/practice9.test.mjs tests/assignment4.test.mjs",
++    "test:first": "node --import ./tests/register.mjs --test tests/first.test.mjs",
++    "test:ui": "node tests/ui.mjs"
+   },
+   "dependencies": {
+     "@supabase/supabase-js": "^2.57.4",
+--- baseline/src/components/CatalogPicker.tsx
++++ project/src/components/CatalogPicker.tsx
+@@ -0,0 +1,32 @@
++import { EQUIPMENT, type CatalogRoom } from '@/config/catalog';
++
++type Props = {
++  rooms: readonly CatalogRoom[]; roomId: string; attendees: string; equipment: readonly string[];
++  onRoom: (id: string) => void; onAttendees: (value: string) => void; onEquipment: (value: string) => void;
++};
++
++export function CatalogPicker({ rooms, roomId, attendees, equipment, onRoom, onAttendees, onEquipment }: Props) {
++  return (
++    <section className="mb-6 space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
++      <h2 className="font-semibold">Find a room</h2>
++      <label className="block">Attendees
++        <input className="ml-3 w-24 rounded border border-slate-300 p-1" type="number" min="1" step="1"
++          value={attendees} onChange={e => onAttendees(e.target.value)} />
++      </label>
++      <fieldset className="flex flex-wrap gap-3">
++        <legend>Required equipment</legend>
++        {EQUIPMENT.map(item => <label key={item} className="inline-flex items-center gap-2">
++          <input type="checkbox" checked={equipment.includes(item)} onChange={() => onEquipment(item)} />{item}
++        </label>)}
++      </fieldset>
++      {rooms.length === 0 ? <p role="status">No rooms match. Reduce attendees or remove equipment requirements.</p> :
++        <label className="block">Room
++          <select className="mt-1 block w-full rounded border border-slate-300 p-2" value={roomId} onChange={e => onRoom(e.target.value)}>
++            {rooms.map(room => <option key={room.id} value={room.id}>
++              {room.name} · {room.capacity} seats{room.blocked ? ' · Blocked' : ''}
++            </option>)}
++          </select>
++        </label>}
++    </section>
++  );
++}
+--- baseline/src/components/RoomAvailabilityChecker.tsx
++++ project/src/components/RoomAvailabilityChecker.tsx
+@@ -1,4 +1,4 @@
+-import { useMemo, useState } from "react";
++import { useState } from "react";
+ import {
+   Clock,
+   DoorClosed,
+@@ -8,22 +8,41 @@
+   LockOpen,
+   CalendarDays,
+ } from "lucide-react";
+-import type { Room, AvailabilityResult } from "@/lib/types";
++import type { AvailabilityResult } from "@/lib/types";
+ import { checkAvailability } from "@/lib/checkAvailability";
+ import { labelToMinutes, minutesToLabel } from "@/lib/time";
+-import { createInitialRoom, CURRENT_TIME } from "@/config/room";
++import { CURRENT_TIME } from "@/config/room";
++import { CATALOG } from "@/config/catalog";
++import { filterRooms } from "@/lib/roomFilters";
++import { CatalogPicker } from "@/components/CatalogPicker";
+ import { Timeline } from "@/components/Timeline";
+ 
++function TimeInput({ id, label, value, example, onChange }: {
++  id: string; label: string; value: string; example: string; onChange: (value: string) => void;
++}) {
++  return <div>
++    <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-slate-600">{label}</label>
++    <input id={id} type="text" value={value} onChange={e => onChange(e.target.value)}
++      placeholder={`e.g. ${example}`}
++      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
++  </div>;
++}
++
+ export function RoomAvailabilityChecker() {
+-  const [room, setRoom] = useState<Room>(createInitialRoom);
++  const [roomId, setRoomId] = useState(CATALOG[0].id);
++  const [attendees, setAttendees] = useState("1");
++  const [equipment, setEquipment] = useState<string[]>([]);
++  const matches = filterRooms(CATALOG, Number(attendees), equipment);
++  const room = matches.find(item => item.id === roomId) ?? matches[0];
+   const [startLabel, setStartLabel] = useState("10:00");
+   const [endLabel, setEndLabel] = useState("11:00");
+   const [result, setResult] = useState<AvailabilityResult | null>(null);
+ 
+-  const startMin = useMemo(() => labelToMinutes(startLabel), [startLabel]);
+-  const endMin = useMemo(() => labelToMinutes(endLabel), [endLabel]);
++  const startMin = labelToMinutes(startLabel);
++  const endMin = labelToMinutes(endLabel);
+ 
+   function handleCheck() {
++    if (!room) return;
+     if (startMin === null || endMin === null) {
+       setResult({
+         available: false,
+@@ -35,11 +54,6 @@
+       return;
+     }
+     setResult(checkAvailability(room, startMin, endMin, CURRENT_TIME));
+-  }
+-
+-  function toggleBlocked() {
+-    setRoom((r) => ({ ...r, blocked: !r.blocked }));
+-    setResult(null);
+   }
+ 
+   function formatDuration(min: number | null): string {
+@@ -72,7 +86,14 @@
+       </header>
+ 
+       <main className="mx-auto max-w-5xl px-5 py-8">
+-        <div className="grid gap-6 md:grid-cols-5">
++        <CatalogPicker rooms={matches} roomId={room?.id ?? ""} attendees={attendees} equipment={equipment}
++          onRoom={id => { setRoomId(id); setResult(null); }}
++          onAttendees={value => { setAttendees(value); setResult(null); }}
++          onEquipment={item => {
++            setEquipment(items => items.includes(item) ? items.filter(value => value !== item) : [...items, item]);
++            setResult(null);
++          }} />
++        {room && <div className="grid gap-6 md:grid-cols-5">
+           {/* Left: room info + form */}
+           <div className="md:col-span-3 space-y-6">
+             {/* Room card */}
+@@ -87,10 +108,10 @@
+                     <p className="text-sm text-slate-500">
+                       {room.building} · Capacity {room.capacity}
+                     </p>
++                    <p className="text-sm text-slate-600">{room.equipment.join(", ")}</p>
+                   </div>
+                 </div>
+-                <button
+-                  onClick={toggleBlocked}
++                <span
+                   className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                     room.blocked
+                       ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
+@@ -106,7 +127,7 @@
+                       <LockOpen className="h-3.5 w-3.5" /> Open
+                     </>
+                   )}
+-                </button>
++                </span>
+               </div>
+ 
+               <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+@@ -125,38 +146,10 @@
+               </h3>
+ 
+               <div className="grid gap-4 sm:grid-cols-2">
+-                <div>
+-                  <label
+-                    htmlFor="start-time"
+-                    className="mb-1.5 block text-xs font-medium text-slate-600"
+-                  >
+-                    Start time (HH:MM)
+-                  </label>
+-                  <input
+-                    id="start-time"
+-                    type="text"
+-                    value={startLabel}
+-                    onChange={(e) => setStartLabel(e.target.value)}
+-                    placeholder="e.g. 10:00"
+-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+-                  />
+-                </div>
+-                <div>
+-                  <label
+-                    htmlFor="end-time"
+-                    className="mb-1.5 block text-xs font-medium text-slate-600"
+-                  >
+-                    End time (HH:MM)
+-                  </label>
+-                  <input
+-                    id="end-time"
+-                    type="text"
+-                    value={endLabel}
+-                    onChange={(e) => setEndLabel(e.target.value)}
+-                    placeholder="e.g. 11:00"
+-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+-                  />
+-                </div>
++                <TimeInput id="start-time" label="Start time (HH:MM)" value={startLabel} example="10:00"
++                  onChange={value => { setStartLabel(value); setResult(null); }} />
++                <TimeInput id="end-time" label="End time (HH:MM)" value={endLabel} example="11:00"
++                  onChange={value => { setEndLabel(value); setResult(null); }} />
+               </div>
+ 
+               <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+@@ -179,7 +172,7 @@
+ 
+             {/* Result */}
+             {result && (
+-              <section
++              <section role="status" data-testid="availability-result"
+                 className={`rounded-2xl border p-5 shadow-sm transition ${
+                   result.available
+                     ? "border-emerald-200 bg-emerald-50"
+@@ -257,7 +250,7 @@
+               )}
+             </section>
+           </div>
+-        </div>
++        </div>}
+       </main>
+     </div>
+   );
+--- baseline/src/config/catalog.ts
++++ project/src/config/catalog.ts
+@@ -0,0 +1,18 @@
++import { createInitialRoom } from './room';
++import type { Room } from '../lib/types';
++
++export type CatalogRoom = Room & { equipment: readonly string[] };
++export const EQUIPMENT = ['Projector', 'Whiteboard', 'Video conferencing'] as const;
++
++export const CATALOG: readonly CatalogRoom[] = [
++  { ...createInitialRoom(), equipment: ['Projector', 'Whiteboard'] },
++  { id: 'room-204', name: 'Room 204', building: 'Engineering Block', capacity: 18,
++    equipment: ['Whiteboard'], blocked: false,
++    bookings: [{ id: 'b204', label: 'Circuits Workshop', start: 720, end: 780 }] },
++  { id: 'studio-3', name: 'Studio 3', building: 'Media Centre', capacity: 42,
++    equipment: ['Projector', 'Video conferencing'], blocked: false,
++    bookings: [{ id: 'bs3', label: 'Media Seminar', start: 840, end: 900 }] },
++  { id: 'room-307', name: 'Room 307', building: 'Science Block', capacity: 24,
++    equipment: ['Projector', 'Whiteboard', 'Video conferencing'], blocked: true,
++    bookings: [{ id: 'b307', label: 'Chemistry Tutorial', start: 660, end: 720 }] },
++];
+--- baseline/src/lib/roomFilters.ts
++++ project/src/lib/roomFilters.ts
+@@ -0,0 +1,9 @@
++type MatchableRoom = { capacity: number; equipment: readonly string[] };
++
++export function filterRooms<T extends MatchableRoom>(
++  rooms: readonly T[], attendees: number, required: readonly string[],
++): T[] {
++  if (!Number.isSafeInteger(attendees) || attendees < 1) return [];
++  return rooms.filter(room => room.capacity >= attendees &&
++    required.every(item => room.equipment.includes(item)));
++}
+--- baseline/tests/assignment4.test.mjs
++++ project/tests/assignment4.test.mjs
+@@ -0,0 +1,45 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { CATALOG, EQUIPMENT } from '../src/config/catalog.ts';
++import { filterRooms } from '../src/lib/roomFilters.ts';
++import { checkAvailability } from '../src/lib/checkAvailability.ts';
++const check = (room, start, end) => checkAvailability(room, start, end, 540);
++
++const base = CATALOG[0];
++const other = CATALOG.find(r => r.id === 'room-204');
++const blocked = CATALOG.find(r => r.blocked);
++test('F1 exact capacity is included', () => assert.ok(filterRooms(CATALOG, base.capacity, []).includes(base)));
++test('F1 capacity one seat short is excluded', () => assert.ok(!filterRooms(CATALOG, base.capacity+1, []).includes(base)));
++test('F2 all required items must be present', () => {
++ const found = filterRooms(CATALOG, 1, [EQUIPMENT[0], EQUIPMENT[1]]);
++ assert.ok(found.includes(base));
++ assert.ok(!found.includes(other));
++ assert.ok(found.every(r => r.equipment.includes(EQUIPMENT[0]) && r.equipment.includes(EQUIPMENT[1])));
++});
++test('F3 blocked match remains visible and cannot be available', () => {
++ assert.ok(filterRooms(CATALOG, 1, []).includes(blocked));
++ assert.equal(check(blocked, 900, 960).available, false);
++});
++test('F4 no eligible rooms yields an empty list', () => assert.deepEqual(filterRooms(CATALOG, 1000, []), []));
++test('invalid attendees are not silently rounded or defaulted', () => {
++ for (const count of [0, -1, 1.5, NaN, Infinity]) assert.deepEqual(filterRooms(CATALOG, count, []), []);
++});
++test('chosen room supplies the booking data', () => {
++ assert.equal(check(base, 600, 660).available, false);
++ assert.equal(check(other, 600, 660).available, true);
++});
++test('catalog booking lists survive repeated checks and filtering', () => {
++ const saved = structuredClone(CATALOG);
++ for (const room of filterRooms(CATALOG, 1, [])) { check(room, 600, 660); check(room, 900, 960); }
++ assert.deepEqual(CATALOG, saved);
++});
++test('catalog has unique ids, complete equipment and distinct booking arrays', () => {
++ assert.ok(CATALOG.length >= 4);
++ assert.equal(new Set(CATALOG.map(r => r.id)).size, CATALOG.length);
++ assert.equal(new Set(CATALOG.map(r => r.bookings)).size, CATALOG.length);
++ for (const room of CATALOG) assert.ok(room.name && room.equipment.length && room.bookings.length);
++});
++test('120 is accepted and 121 rejected in a free evening slot', () => {
++ assert.equal(check(base, 1080, 1200).available, true);
++ assert.equal(check(base, 1080, 1201).available, false);
++});
+--- baseline/tests/ui.mjs
++++ project/tests/ui.mjs
+@@ -0,0 +1,56 @@
++import assert from 'node:assert/strict';
++import { createServer } from 'node:http';
++import { readFile, mkdir } from 'node:fs/promises';
++import { resolve, extname, sep } from 'node:path';
++const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
++const root = resolve('dist'), photos = process.env.UI_EVIDENCE_DIR;
++if (photos) await mkdir(photos,{recursive:true});
++const server=createServer(async(req,res)=>{
++ const path=new URL(req.url,'http://localhost').pathname;
++ const file=resolve(root,'.'+(path==='/'?'/index.html':path));
++ if(!file.startsWith(root+sep))return res.writeHead(403).end();
++ try{const data=await readFile(file);res.writeHead(200,{'content-type':{'.js':'text/javascript','.html':'text/html','.css':'text/css'}[extname(file)]||'application/octet-stream'}).end(data);}
++ catch{res.writeHead(404).end();}
++});
++await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok);});
++let browser;
++try {
++ browser=await chromium.launch({executablePath:process.env.BROWSER_EXECUTABLE||undefined});
++ const page=await browser.newPage({viewport:{width:1280,height:850}});
++ const errors=[];page.on('pageerror',e=>errors.push(e.message));
++ await page.goto('http://127.0.0.1:'+server.address().port);
++ const shot=async name=>{if(photos)await page.screenshot({path:resolve(photos,name+'.png'),fullPage:true});};
++ const y=true;
++ const choose=(id,name)=>y?page.getByRole('combobox').selectOption(id):page.getByRole('button',{name:new RegExp(name)}).click();
++ const check=()=>page.getByRole('button',{name:'Check Availability'}).click();
++ const result=page.getByTestId('availability-result');
++ const setTime=async (a,b)=>{await page.locator('#start-time').fill(a);await page.locator('#end-time').fill(b);};
++ await setTime(y?'10:00':'600',y?'11:00':'660');
++ await check();assert.match(await result.innerText(),/Unavailable/i);
++ await choose(y?'room-204':'darwin-105',y?'Room 204':'Darwin 105');
++ assert.equal(await result.count(),0);await check();assert.match(await result.innerText(),/\bAvailable\b/);await shot('01-room-switch');
++ console.log('PASS F5: selecting another room cleared feedback and changed the result for the same interval.');
++ const required=y?['Projector','Whiteboard']:['Display','Whiteboard'];
++ await page.getByLabel('Attendees').fill(y?'30':'40');
++ for(const item of required)await page.getByLabel(item,{exact:true}).check();
++ if(y)assert.deepEqual(await page.getByRole('combobox').locator('option').evaluateAll(xs=>xs.map(x=>x.value)),['room-101']);
++ else {assert.equal(await page.getByRole('button',{name:/Watson 101/}).count(),1);assert.equal(await page.getByRole('button',{name:/Einstein 330|Thoreau 015|Darwin 105|Kepler 220/}).count(),0);}
++ assert.equal(await result.count(),0);await shot('02-exact-capacity-and-equipment');
++ console.log('PASS F1/F2: exact capacity and both required items; only the matching room is shown.');
++ await page.getByLabel('Attendees').fill('1000');
++ assert.match(await page.getByRole('status').innerText(),/No rooms match/);
++ const button=page.getByRole('button',{name:'Check Availability'});
++ if(await button.count())assert.equal(await button.isEnabled(),false);
++ assert.equal(await result.count(),0);await shot('03-empty-state');
++ console.log('PASS F4: no matches, no old result, and no enabled check.');
++ await page.getByLabel('Attendees').fill('1');
++ for(const item of required)await page.getByLabel(item,{exact:true}).uncheck();
++ await choose(y?'room-307':'kepler-220',y?'Room 307':'Kepler 220');
++ await setTime(y?'15:00':'900',y?'16:00':'960');await check();
++ assert.match(await result.innerText(),/blocked/i);await shot('04-blocked-room');
++ console.log('PASS F3: blocked room rejected in an otherwise free interval.');
++ await page.setViewportSize({width:390,height:844});
++ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
++ assert.match(await result.innerText(),/blocked/i);assert.deepEqual(errors,[]);await shot('05-mobile');
++ console.log('PASS AC6: 390 px layout with feedback, no horizontal overflow or uncaught errors.');
++} finally {await browser?.close();await new Promise(ok=>server.close(ok));}
