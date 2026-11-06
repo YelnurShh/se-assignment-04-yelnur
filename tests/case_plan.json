@@ -1,0 +1,253 @@
+[
+  {
+    "id": "T01",
+    "start": 660,
+    "end": 720,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": true,
+    "ac": "AC4",
+    "reason": "Starts exactly when the existing booking ends; no shared minute."
+  },
+  {
+    "id": "T02",
+    "start": 540,
+    "end": 570,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC1",
+    "reason": "Start equals now, so it is not strictly later."
+  },
+  {
+    "id": "T03",
+    "start": 720,
+    "end": 720,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC1",
+    "reason": "An empty interval is invalid."
+  },
+  {
+    "id": "T04",
+    "start": 750,
+    "end": 720,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC1",
+    "reason": "End is before start."
+  },
+  {
+    "id": "T05",
+    "start": 1380,
+    "end": 1441,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC1",
+    "reason": "1441 is outside the day."
+  },
+  {
+    "id": "T06",
+    "start": 720,
+    "end": 840,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": true,
+    "ac": "AC2",
+    "reason": "Exactly 120 minutes is within the limit and has no conflict."
+  },
+  {
+    "id": "T07",
+    "start": 720,
+    "end": 841,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC2",
+    "reason": "121 minutes exceeds the limit."
+  },
+  {
+    "id": "T08",
+    "start": 570,
+    "end": 600,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": true,
+    "ac": "AC4",
+    "reason": "Ends exactly when the existing booking starts."
+  },
+  {
+    "id": "T09",
+    "start": 630,
+    "end": 690,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC4",
+    "reason": "Shares minutes 630 through 659 with the booking."
+  },
+  {
+    "id": "T10",
+    "start": 570,
+    "end": 690,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC4",
+    "reason": "Contains the complete existing booking."
+  },
+  {
+    "id": "T11",
+    "start": 615,
+    "end": 645,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC4",
+    "reason": "Lies inside the existing booking."
+  },
+  {
+    "id": "T12",
+    "start": 600,
+    "end": 660,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC4",
+    "reason": "An identical interval conflicts throughout."
+  },
+  {
+    "id": "T13",
+    "start": 660,
+    "end": 720,
+    "now": 540,
+    "blocked": true,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC3",
+    "reason": "A blocked room rejects an otherwise valid interval."
+  },
+  {
+    "id": "T14",
+    "start": 630,
+    "end": 690,
+    "now": 540,
+    "blocked": false,
+    "bookings": [],
+    "expected": true,
+    "ac": "AC4",
+    "reason": "With an empty booking array there is no conflict."
+  },
+  {
+    "id": "T16",
+    "start": 1320,
+    "end": 1440,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": true,
+    "ac": "AC1",
+    "reason": "The final minute boundary 1440 is an allowed end."
+  },
+  {
+    "id": "T17",
+    "start": 660.5,
+    "end": 720,
+    "now": 540,
+    "blocked": false,
+    "bookings": [
+      {
+        "start": 600,
+        "end": 660
+      }
+    ],
+    "expected": false,
+    "ac": "AC1",
+    "reason": "Numeric fractional minutes violate the whole-minute contract."
+  }
+]
